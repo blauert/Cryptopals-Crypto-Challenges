@@ -43,7 +43,7 @@ def ch3():
 def ch4():
     # https://cryptopals.com/sets/1/challenges/4
     print("4: Detect single-character XOR")
-    with open('4.txt') as file:
+    with open('txt/4.txt') as file:
         lines = [bytes.fromhex(line) for line in file.readlines()]
     scores = []
     for line in lines:
@@ -66,7 +66,7 @@ def ch5():
 def ch6():
     # https://cryptopals.com/sets/1/challenges/6
     print("6: Break repeating-key XOR")
-    with open('6.txt') as file:
+    with open('txt/6.txt') as file:
         ciphertext = base64.b64decode(file.read())
     keysize = guess_keysize(ciphertext)
     key = break_vigenere_key(ciphertext, keysize)
@@ -79,7 +79,7 @@ def ch7():
     # https://cryptopals.com/sets/1/challenges/7
     print("7: AES in ECB mode")
     key = b"YELLOW SUBMARINE"
-    with open('7.txt') as file:
+    with open('txt/7.txt') as file:
         ciphertext = base64.b64decode(file.read())
     # https://pycryptodome.readthedocs.io/en/latest/src/cipher/classic.html#ecb-mode
     cipher = AES.new(key, AES.MODE_ECB)
@@ -90,7 +90,7 @@ def ch7():
 def ch8():
     # https://cryptopals.com/sets/1/challenges/8
     print("8: Detect AES in ECB mode")
-    with open('8.txt') as file:
+    with open('txt/8.txt') as file:
         lines = [bytes.fromhex(line.strip()) for line in file.readlines()]
     ecb_candidates = []
     for line_num, line in enumerate(lines):
