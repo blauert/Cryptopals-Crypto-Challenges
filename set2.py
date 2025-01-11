@@ -5,7 +5,8 @@ import base64
 from Crypto.Cipher import AES
 from Crypto.Util import Padding
 
-from helpers import xor_combination
+from set1_helpers import xor_combination
+from set2_helpers import black_box_ecb_cbc, encryption_oracle
 
 
 def ch9():
@@ -43,6 +44,25 @@ def ch10():
     print(plaintext.decode('utf-8', errors='ignore')[:220], "...")
 
 
+def ch11():
+    # https://cryptopals.com/sets/2/challenges/11
+    print("11: An ECB/CBC detection oracle")
+    ecb_detected = False
+    cbc_detected = False
+    while not (ecb_detected and cbc_detected):
+        mode = encryption_oracle(black_box_ecb_cbc(b'BLA'*100))
+        match mode:
+            case 'ECB': ecb_detected = True
+            case 'CBC': cbc_detected = True
+
+
+def ch12():
+    # https://cryptopals.com/sets/2/challenges/12
+    print("12: Byte-at-a-time ECB decryption (Simple)")
+
+    
+
 if __name__ == "__main__":
     ch9(), print()
     ch10(), print()
+    ch11(), print()
