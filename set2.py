@@ -6,7 +6,14 @@ from Crypto.Cipher import AES
 from Crypto.Util import Padding
 
 from set1_helpers import xor_combination
-from set2_helpers import black_box_ecb_cbc, encryption_oracle
+from set2_helpers import (
+    black_box_ecb_cbc,
+    encryption_oracle,
+    unknown_string_encrypter,
+    detect_block_size,
+    detect_ecb,
+    byte_at_a_time_oracle
+)
 
 
 def ch9():
@@ -41,7 +48,7 @@ def ch10():
     print("Original:", plaintext[last_2_blocks:])
     plaintext = Padding.unpad(plaintext, block_size)
     print("Unpadded:", plaintext[last_2_blocks:])
-    print(plaintext.decode('utf-8', errors='ignore')[:220], "...")
+    print(plaintext.decode('utf-8')[:220], "...")
 
 
 def ch11():
@@ -59,10 +66,17 @@ def ch11():
 def ch12():
     # https://cryptopals.com/sets/2/challenges/12
     print("12: Byte-at-a-time ECB decryption (Simple)")
+    enc_func = unknown_string_encrypter()
+    block_size = detect_block_size(enc_func)
+    print(f"Block size: {block_size}")
+    ecb = detect_ecb(enc_func, block_size)
+    print(f"ECB detected: {ecb}")
+    decrypted = byte_at_a_time_oracle(enc_func, block_size)
+    print(decrypted.decode('utf-8'))
 
-    
 
 if __name__ == "__main__":
     ch9(), print()
     ch10(), print()
     ch11(), print()
+    ch12(), print()
