@@ -122,12 +122,66 @@ def byte_at_a_time_oracle(enc_func, block_size):
     return unpadded[fillers:]
 
 
+def parse_kv(cookie):
+    data = {}
+    for pair in cookie.split('&'):
+        k, v = pair.split('=')
+        data[k] = v
+    return data
+
+
+def profile_for(email):
+    return f"email={email.replace('&', '').replace('=', '')}&uid=10&role=user"
+
+
+class CookieServer:
+    
+    def __init__(self):
+        self.block_size = 16
+        self.cipher = AES.new(random.randbytes(16), AES.MODE_ECB)
+
+    def encrypt_profile(self, email):
+        if type(email) == bytes:  # allow detect_block_size() to input bytes
+            email = email.decode()
+        profile = profile_for(email)
+        return self.cipher.encrypt(Padding.pad(profile.encode(), self.block_size))
+
+    def decrypt_profile(self, ciphertext):
+        return Padding.unpad(self.cipher.decrypt(ciphertext), self.block_size).decode()
+
+
+def make_admin_profile(enc_func):
+    block_size = detect_block_size(enc_func)
+
+    first_part = 'email='
+    middle_part = '&uid=10&role='
+    # xx1337h@ck.er&uid=10&role=
+    filler_email = '1337h@ck.er'.rjust((2 * block_size - len(first_part) - len(middle_part)), 'x')
+    email_block = enc_func(filler_email)[:2*block_size]
+    # admin&uid=10&rol
+    evil_email = (block_size - len(first_part)) * 'A' + 'admin'
+    admin_block = enc_func(evil_email)[block_size:2*block_size]
+    # =user
+    filler_end = 'A' * (2*block_size - len(first_part) - len(middle_part) + 1)
+    last_block = enc_func(filler_end)[2*block_size:3*block_size]
+
+    return email_block + admin_block + last_block
+
+
 if __name__ == "__main__":
     # Oracle
     print("Black box:", black_box_ecb_cbc(b'X'*50))
     print()
-    # Prepend As
+    # Prepend A's
     for i in [3, 15, 16, 35]:
         text = i * 'B'
         output = (number_of_As(text, 16) - 1) * 'A' + text
         print(output, len(output), f"({i}xB)")
+    print()
+    # Structured Cookie
+    print("Parsed:", parse_kv("foo=bar&baz=qux&zap=zazzle"))
+    print("Metachars eaten:", profile_for("foo@bar.com&role=admin"))
+    c = CookieServer()
+    ciphertext = c.encrypt_profile("foo@bar.com")
+    print("Encrypted & decrypted:", parse_kv(c.decrypt_profile(ciphertext)))
+    print()

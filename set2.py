@@ -12,7 +12,10 @@ from set2_helpers import (
     unknown_string_encrypter,
     detect_block_size,
     detect_ecb,
-    byte_at_a_time_oracle
+    byte_at_a_time_oracle,
+    CookieServer,
+    make_admin_profile,
+    parse_kv,
 )
 
 
@@ -75,8 +78,18 @@ def ch12():
     print(decrypted.decode('utf-8'))
 
 
+def ch13():
+    # https://cryptopals.com/sets/2/challenges/13
+    print("13: ECB cut-and-paste")
+    c = CookieServer()
+    print(parse_kv(c.decrypt_profile(c.encrypt_profile('foo@bar.com'))))
+    admin_profile = make_admin_profile(c.encrypt_profile)
+    print(parse_kv(c.decrypt_profile(admin_profile)))
+
+
 if __name__ == "__main__":
     ch9(), print()
     ch10(), print()
     ch11(), print()
-    ch12(), print()
+    ch12()
+    ch13(), print()
