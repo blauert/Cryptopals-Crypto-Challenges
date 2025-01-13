@@ -155,17 +155,24 @@ def make_admin_profile(enc_func):
 
     first_part = 'email='
     middle_part = '&uid=10&role='
-    # xx1337h@ck.er&uid=10&role=
+
+    # email=xx1337h@ck .er&uid=10&role= user
     filler_email = '1337h@ck.er'.rjust((2 * block_size - len(first_part) - len(middle_part)), 'x')
-    email_block = enc_func(filler_email)[:2*block_size]
-    # admin&uid=10&rol
+    # email=xx1337h@xX .0r&uid=10&role=
+    email_and_role_block = enc_func(filler_email)[:2*block_size]
+
+    # email=AAAAAAAAAA admin&uid=10&rol e=user
     evil_email = (block_size - len(first_part)) * 'A' + 'admin'
+    # admin&uid=10&rol
     admin_block = enc_func(evil_email)[block_size:2*block_size]
-    # =user
+
+    # email=AAAAAAAAAA AAAA&uid=10&role =user
     filler_end = 'A' * (2*block_size - len(first_part) - len(middle_part) + 1)
+    # =user
     last_block = enc_func(filler_end)[2*block_size:3*block_size]
 
-    return email_block + admin_block + last_block
+    # email=xx1337h@xX .0r&uid=10&role= admin&uid=10&rol =user
+    return email_and_role_block + admin_block + last_block
 
 
 if __name__ == "__main__":
