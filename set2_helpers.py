@@ -94,10 +94,14 @@ def number_of_As(plaintext, block_size):
     return len(plaintext) // block_size * block_size + block_size - len(plaintext)
 
 
-def byte_at_a_time_oracle(enc_func, block_size):
+def byte_at_a_time_oracle(enc_func):
+    block_size = detect_block_size(enc_func)
+    if not detect_ecb(enc_func, block_size):
+        return
     plaintext = bytearray(b'')
     byte_idx = block_size  # start at last byte in block
     while True:
+        # block index (starting at 0)
         i = (len(plaintext) // block_size) * block_size
         # input block that is exactly 1 byte short
         known_input = b'A' * (number_of_As(plaintext, block_size) - 1)
@@ -152,6 +156,8 @@ class CookieServer:
 
 def make_admin_profile(enc_func):
     block_size = detect_block_size(enc_func)
+    if not detect_ecb(enc_func, block_size):
+        return
 
     first_part = 'email='
     middle_part = '&uid=10&role='
@@ -175,9 +181,101 @@ def make_admin_profile(enc_func):
     return email_and_role_block + admin_block + last_block
 
 
+def unknown_string_encrypter_harder():
+    # AES-128-ECB(random-prefix || attacker-controlled || target-bytes, random-key)
+    with open('txt/12.txt') as file:
+        unknown_string = base64.b64decode(file.read())
+    key = random.randbytes(16)
+    cipher = AES.new(key, AES.MODE_ECB)
+
+    random_bytes = random.randbytes(random.randint(0,100))
+    print(f"Length of random prefix: {len(random_bytes)}")
+
+    def encrypt_func(my_string):
+        my_string = random_bytes + my_string + unknown_string
+        return cipher.encrypt(Padding.pad(my_string, 16))
+    
+    return encrypt_func
+
+
+def detect_target_start(enc_func):
+    block_size = detect_block_size(enc_func)
+    if not detect_ecb(enc_func, block_size):
+        return
+    # detect start of the target bytes
+    input_len = 2 * block_size
+    target_start = None
+    while True:
+        my_input = b'A' * input_len
+        ciphertext = enc_func(my_input)
+        for i in range(block_size, len(ciphertext), block_size):
+            prev_block = ciphertext[i-block_size:i]
+            cur_block = ciphertext[i:i+block_size]
+            # break as soon as my_input generates two identical blocks
+            if cur_block == prev_block:
+                # target starts at length of random prefix
+                target_start = i-block_size - (input_len % block_size)
+                break
+        if target_start is not None:
+            break
+        input_len += 1
+    return block_size, target_start
+
+
+def byte_at_a_time_oracle_harder(enc_func):
+    """
+    fill up the last prefix block with A's
+              v
+    PPPPAAAAAAAAAAAA AAAAAAAAAAAAAAAT TTTTTTTTTTTTTTTT
+                            ^
+    the first block after last prefix block is where it's at
+    
+    -> same as ch12, just add target_start & prefix_fillers to everything
+    """
+    block_size, target_start = detect_target_start(enc_func)
+    print(f'Target bytes start at index: {target_start}')
+    # bytes in target block occupied by prefix
+    prefix_fillers = block_size - (target_start % block_size)
+    print(f"Start configuration: {'P' * (block_size - prefix_fillers)}{'A' * (prefix_fillers)} {'A' * 15}T")
+    # decrypt the target-bytes
+    plaintext = bytearray(b'')
+    byte_idx = block_size  # start at last byte in block
+    while True:
+        # block index (starting at 0)
+        i = (((len(plaintext) // block_size)) + (target_start + prefix_fillers) // block_size) * block_size
+        # input block that is exactly 1 byte short
+        known_input = b'A' * (number_of_As(plaintext, block_size) + prefix_fillers - 1)
+        cur_block = enc_func(known_input)[i:i+block_size]
+        # try every possible last byte
+        decrypted = False
+        for ascii_char in range(128):
+            cur_char = chr(ascii_char).encode()
+            cur_input = known_input + plaintext + cur_char
+            if enc_func(cur_input)[i:i+block_size] == cur_block:
+                plaintext.extend(cur_char)
+                decrypted = True
+                break
+        if not decrypted:
+            break
+        byte_idx -= 1
+        if byte_idx == 0:
+            byte_idx = block_size
+    # fill up to match block_size and remove padding
+    fillers = number_of_As(plaintext, block_size)
+    unpadded = Padding.unpad(b'A' * fillers + plaintext, block_size)
+    return unpadded[fillers:]
+
+
 if __name__ == "__main__":
     # Oracle
     print("Black box:", black_box_ecb_cbc(b'X'*50))
+    print()
+    # ECB decryption
+    enc_func = unknown_string_encrypter()
+    block_size = detect_block_size(enc_func)
+    print(f"Block size: {block_size}")
+    ecb = detect_ecb(enc_func, block_size)
+    print(f"ECB detected: {ecb}")
     print()
     # Prepend A's
     for i in [3, 15, 16, 35]:

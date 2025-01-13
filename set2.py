@@ -10,12 +10,12 @@ from set2_helpers import (
     black_box_ecb_cbc,
     encryption_oracle,
     unknown_string_encrypter,
-    detect_block_size,
-    detect_ecb,
     byte_at_a_time_oracle,
     CookieServer,
     make_admin_profile,
     parse_kv,
+    unknown_string_encrypter_harder,
+    byte_at_a_time_oracle_harder,
 )
 
 
@@ -70,11 +70,7 @@ def ch12():
     # https://cryptopals.com/sets/2/challenges/12
     print("12: Byte-at-a-time ECB decryption (Simple)")
     enc_func = unknown_string_encrypter()
-    block_size = detect_block_size(enc_func)
-    print(f"Block size: {block_size}")
-    ecb = detect_ecb(enc_func, block_size)
-    print(f"ECB detected: {ecb}")
-    decrypted = byte_at_a_time_oracle(enc_func, block_size)
+    decrypted = byte_at_a_time_oracle(enc_func)
     print(decrypted.decode('utf-8'))
 
 
@@ -87,9 +83,18 @@ def ch13():
     print(parse_kv(c.decrypt_profile(admin_profile)))
 
 
+def ch14():
+    # https://cryptopals.com/sets/2/challenges/14
+    print("14: Byte-at-a-time ECB decryption (Harder)")
+    enc_func = unknown_string_encrypter_harder()
+    decrypted = byte_at_a_time_oracle_harder(enc_func)
+    print(decrypted.decode('utf-8'))
+
+
 if __name__ == "__main__":
     ch9(), print()
     ch10(), print()
     ch11(), print()
     ch12()
     ch13(), print()
+    ch14()
