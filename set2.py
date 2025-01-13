@@ -16,6 +16,8 @@ from set2_helpers import (
     parse_kv,
     unknown_string_encrypter_harder,
     byte_at_a_time_oracle_harder,
+    CookieServerCBC,
+    cbc_bit_flip,
 )
 
 
@@ -91,6 +93,27 @@ def ch14():
     print(decrypted.decode('utf-8'))
 
 
+def ch15():
+    # https://cryptopals.com/sets/2/challenges/15
+    print("15: PKCS#7 padding validation")
+    for string in [b"ICE ICE BABY\x04\x04\x04\x04",
+                   b"ICE ICE BABY\x05\x05\x05\x05",
+                   b"ICE ICE BABY\x01\x02\x03\x04"]:
+        try:
+            print(Padding.unpad(string, 16))
+        except Exception as e:
+            print(e)
+
+
+def ch16():
+    # https://cryptopals.com/sets/2/challenges/16
+    print("16: CBC bitflipping attacks")
+    c = CookieServerCBC()
+    ciphertext = cbc_bit_flip(c.encrypt_string)
+    print(c.decrypt_string(ciphertext))
+    print(f"-> Is admin? {c.is_admin(ciphertext)}")
+
+
 if __name__ == "__main__":
     ch9(), print()
     ch10(), print()
@@ -98,3 +121,5 @@ if __name__ == "__main__":
     ch12()
     ch13(), print()
     ch14()
+    ch15(), print()
+    ch16()

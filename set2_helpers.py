@@ -266,6 +266,48 @@ def byte_at_a_time_oracle_harder(enc_func):
     return unpadded[fillers:]
 
 
+class CookieServerCBC:
+    
+    def __init__(self):
+        self.block_size = 16
+        key = random.randbytes(16)
+        iv = random.randbytes(self.block_size)
+        self.e_cipher = AES.new(key, AES.MODE_CBC, iv=iv)
+        self.d_cipher = AES.new(key, AES.MODE_CBC, iv=iv)
+
+    def encrypt_string(self, user_input):
+        user_input = user_input.replace(';', '";"').replace('=', '"="')
+        new_string = f"comment1=cooking%20MCs;userdata={user_input};comment2=%20like%20a%20pound%20of%20bacon"
+        return self.e_cipher.encrypt(Padding.pad(new_string.encode(), self.block_size))
+
+    def decrypt_string(self, ciphertext):
+        return Padding.unpad(self.d_cipher.decrypt(ciphertext), self.block_size)
+    
+    def is_admin(self, ciphertext):
+        plaintext = self.decrypt_string(ciphertext).decode(errors='ignore')
+        if ";admin=true;" in plaintext:
+            return True
+        else:
+            return False
+
+
+def cbc_bit_flip(enc_func):
+    # index           16               32               48
+    #                                   bit flip here    sets bit here
+    #                                   v                v
+    # comment1=cooking %20MCs;userdata= AAAAAAAAAAAAAAAA AadminAtrue;comm ...
+    ciphertext = bytearray(enc_func('A' * 16 + 'AadminAtrue'))
+    # comment1=cooking %20MCs;userdata= AAAAAAAAAAAAAAAA ;adminAtrue;comm ...
+    ciphertext[32] = ciphertext[32] ^ int.from_bytes(b'A') ^ int.from_bytes(b';')
+    #                                         bit flip here    sets bit here
+    #                                         v                v
+    # comment1=cooking %20MCs;userdata= AAAAAAAAAAAAAAAA ;admin=true;comm ...
+    ciphertext[38] = ciphertext[38] ^ int.from_bytes(b'A') ^ int.from_bytes(b'=')
+    # 3rd block gets scambled
+    # bit flip is propagated to 4th block
+    return ciphertext
+
+
 if __name__ == "__main__":
     # Oracle
     print("Black box:", black_box_ecb_cbc(b'X'*50))
@@ -290,3 +332,17 @@ if __name__ == "__main__":
     ciphertext = c.encrypt_profile("foo@bar.com")
     print("Encrypted & decrypted:", parse_kv(c.decrypt_profile(ciphertext)))
     print()
+    # CBC bit flip
+    prev_block = int.from_bytes(b'C')
+    aes_key = int.from_bytes(b'K')
+    plaintext = int.from_bytes(b'P')
+    ciphertext = plaintext ^ prev_block ^ aes_key
+    plaintext = ciphertext ^ aes_key ^ prev_block
+    print("Decrypted plaintext before bit flip:", plaintext.to_bytes(), bin(plaintext))
+    print("Flipping bits in previous block works:")
+    for target in [b'Q', b'R', b'S', b'=', b';']:
+        flip = plaintext ^ int.from_bytes(target)
+        prev_block_flip = prev_block ^ flip
+        plaintext_flip = ciphertext ^ aes_key ^ prev_block_flip
+        print(f"Decrypted plaintext after bit flip ({bin(flip)}):", plaintext_flip.to_bytes(), bin(plaintext_flip))
+    
