@@ -104,7 +104,7 @@ def ctr_attack(encrypted_lines):
     # CIPHERTEXT-BYTE XOR PLAINTEXT-BYTE = KEYSTREAM-BYTE
     # CIPHERTEXT-BYTE XOR KEYSTREAM-BYTE = PLAINTEXT-BYTE
     en_letters, en_trigrams = poetry_frequencies()
-    allowed_chars = set(chr(i) for i in range(32,127)) | {chr(10), chr(13)}
+    allowed_chars = set(chr(i) for i in range(32,93)) | set(chr(i) for i in range(96,127)) | {chr(10), chr(13)}
 
     # Letter frequencies
     first_candidates = []

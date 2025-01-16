@@ -6,7 +6,7 @@ import random
 from Crypto.Cipher import AES
 from Crypto.Util import Counter, Padding
 
-from set1_helpers import xor_combination, break_vigenere_key
+from set1_helpers import xor_combination
 from set3_helpers import (
     PaddingServerCBC,
     padding_oracle,
@@ -80,7 +80,7 @@ def ch19():
     first_guess, second_guess = ctr_attack(encrypted_lines)
     print(f"{"First guess (letter frequencies):".ljust(39, " ")}Second guess, refined w/ trigrams:")
     print(f"{"".ljust(38, "-")} {"".ljust(38, "-")}")
-    for line in encrypted_lines:
+    for line in encrypted_lines[:5]:
         first = xor_combination(line, first_guess).decode('utf-8')
         second = xor_combination(line, second_guess).decode('utf-8')
         print(f"{first.ljust(39, " ")}{second}")
@@ -113,11 +113,19 @@ def ch20():
     #    repeating_key_ciphertexts.extend(c)
     print("Same as challenge 19...")
     first_guess, second_guess = ctr_attack(encrypted_lines)
-    for line in encrypted_lines:
+    for line in encrypted_lines[:5]:
         first = xor_combination(line, first_guess).decode('utf-8')
         second = xor_combination(line, second_guess).decode('utf-8')
         print("Letters:", first)
         print("Refined:", second)
+
+
+def ch21():
+    # https://cryptopals.com/sets/3/challenges/21
+    print("21: Implement the MT19937 Mersenne Twister RNG")
+    # You can get the psuedocode for this from Wikipedia.
+    # https://en.wikipedia.org/wiki/Mersenne_Twister
+
 
 
 if __name__ == "__main__":
@@ -125,3 +133,4 @@ if __name__ == "__main__":
     ch18(), print()
     ch19(), print()
     ch20(), print()
+    ch21(), print()
