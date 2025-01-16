@@ -5,11 +5,12 @@ import random
 
 from Crypto.Cipher import AES
 from Crypto.Util import Counter, Padding
-from Crypto.Random import get_random_bytes
 
+from set1_helpers import xor_combination
 from set3_helpers import (
     PaddingServerCBC,
     padding_oracle,
+    ctr_attack,
 )
 
 
@@ -56,7 +57,36 @@ def ch18():
     print(pt.decode('utf-8'))
 
 
+def ch19():
+    # https://cryptopals.com/sets/3/challenges/19
+    print("19: Break fixed-nonce CTR mode using substitutions")
+    with open('txt/19.txt') as file:
+        lines = [base64.b64decode(line.strip()) for line in file.readlines()]
+    key=b'YELLOW SUBMARINE'
+    nonce = 0
+    ctr = Counter.new(
+        64,  # 64 bit little endian block count (byte count / 16)
+        prefix=nonce.to_bytes(8, 'little'),  # 64 bit unsigned little endian nonce
+        initial_value=0,
+        little_endian=True  # default: big endian!
+    )
+    encrypted_lines = []
+    for line in lines:
+        # In successive encryptions (not in one big running CTR stream), encrypt each line:
+        e_cipher = AES.new(key, AES.MODE_CTR, counter=ctr)
+        # Because the CTR nonce wasn't randomized for each encryption,
+        # each ciphertext has been encrypted against the same keystream.
+        encrypted_lines.append(e_cipher.encrypt(line))
+    first_guess, second_guess = ctr_attack(encrypted_lines)
+    print(f"{"First guess (letter frequencies):".ljust(39, " ")}Second guess, refined w/ trigrams:")
+    print(f"{"".ljust(38, "-")} {"".ljust(38, "-")}")
+    for line in encrypted_lines:
+        first = xor_combination(line, first_guess).decode('utf-8')
+        second = xor_combination(line, second_guess).decode('utf-8')
+        print(f"{first.ljust(39, " ")}{second}")
+
+
 if __name__ == "__main__":
     ch17(), print()
     ch18(), print()
-    
+    ch19(), print()
