@@ -6,7 +6,7 @@ import random
 from Crypto.Cipher import AES
 from Crypto.Util import Counter, Padding
 
-from set1_helpers import xor_combination
+from set1_helpers import xor_combination, break_vigenere_key
 from set3_helpers import (
     PaddingServerCBC,
     padding_oracle,
@@ -86,7 +86,42 @@ def ch19():
         print(f"{first.ljust(39, " ")}{second}")
 
 
+def ch20():
+    # https://cryptopals.com/sets/3/challenges/20
+    print("20: Break fixed-nonce CTR statistically")
+    with open('txt/20.txt') as file:
+        lines = [base64.b64decode(line.strip()) for line in file.readlines()]
+    key=b'YELLOW SUBMARINE'
+    nonce = 0
+    ctr = Counter.new(
+        64,
+        prefix=nonce.to_bytes(8, 'little'),
+        initial_value=0,
+        little_endian=True
+    )
+    encrypted_lines = []
+    for line in lines:
+        e_cipher = AES.new(key, AES.MODE_CTR, counter=ctr)
+        encrypted_lines.append(e_cipher.encrypt(line))
+    ## CTR encryption appears different from repeated-key XOR,
+    ## but with a fixed nonce they are effectively the same thing
+    #shortest_len = min([len(c) for c in encrypted_lines])
+    ## truncate them to a common length (the length of the smallest ciphertext will work)
+    #truncated_ciphertexts = [c[:shortest_len] for c in encrypted_lines]
+    #repeating_key_ciphertexts = bytearray()
+    #for c in truncated_ciphertexts:
+    #    repeating_key_ciphertexts.extend(c)
+    print("Same as challenge 19...")
+    first_guess, second_guess = ctr_attack(encrypted_lines)
+    for line in encrypted_lines:
+        first = xor_combination(line, first_guess).decode('utf-8')
+        second = xor_combination(line, second_guess).decode('utf-8')
+        print("Letters:", first)
+        print("Refined:", second)
+
+
 if __name__ == "__main__":
     ch17(), print()
     ch18(), print()
     ch19(), print()
+    ch20(), print()
