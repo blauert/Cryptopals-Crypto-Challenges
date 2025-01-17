@@ -154,6 +154,7 @@ def ctr_attack(encrypted_lines):
 
 if __name__ == "__main__":
     # CBC padding oracle by hand
+    print("PaddingServerCBC()")
     cbc = PaddingServerCBC()
     iv, ciphertext = cbc.encrypt_string(b'ABCDEFGHIJKLMNOPyellow submarine1234')
     for ciphtxt in [ciphertext, iv+ciphertext]:
@@ -167,6 +168,7 @@ if __name__ == "__main__":
                 print(f"{i} ^ \\x01 -> plaintext[31] == {chr(i ^ 1)} ({i ^ 1})\n")
                 break
     # Letter and trigram frequencies
+    print("sum_of_squared_differences()")
     letters, trigrams = poetry_frequencies()
     print("Letter scores:")
     print("'ice ice baby' ->", round(sum_of_squared_differences('ice ice baby', letters), 1))

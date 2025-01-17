@@ -104,6 +104,7 @@ def break_vigenere_key(ciphertext, keysize):
 
 if __name__ == "__main__":
     # Letter frequency
+    print("judge_letter_frequency()")
     not_english, english, more_english = b"##$$]ZZXX", b"X-Ray Zulu", b"ETAOIN SHRDLU"
     print("Scores:")
     print(not_english, "->", judge_letter_frequency(not_english))
@@ -111,9 +112,11 @@ if __name__ == "__main__":
     print(more_english, "->", judge_letter_frequency(more_english))
     print()
     # Hamming Distance
+    print("hamming_distance()")
     str1, str2 = b"this is a test", b"wokka wokka!!!"
     print("Hamming distance:", str1, str2, "->", hamming_distance(str1, str2))
     print()
     # Keysize
+    print("guess_keysize()")
     test_input = [1, 2, 3, 1, 2, 3, 1, 2, 3, 1]
     print("Keysize:", test_input, "->", guess_keysize(test_input))

@@ -1,6 +1,72 @@
 https://cryptopals.com/
 
 <details>
+<summary>Helper functions output</summary>
+
+```
+judge_letter_frequency()
+Scores:
+b'##$$]ZZXX' -> 2032.6657604320985
+b'X-Ray Zulu' -> 1237.1069949999999
+b'ETAOIN SHRDLU' -> 276.643918076923
+
+hamming_distance()
+Hamming distance: b'this is a test' b'wokka wokka!!!' -> 37
+
+guess_keysize()
+Keysize: [1, 2, 3, 1, 2, 3, 1, 2, 3, 1] -> 3
+
+black_box_ecb_cbc()
+Encryption mode: ECB
+Black box: b'\xc6\xc5\xf1b\xd2\x81q\x91 \xd9@\x81\xefQ\xa46C\x98\x18\x17\x88\x93\xdf\x0e\xa9\xb6\x85\xb6\xd3uf<C\x98\x18\x17\x88\x93\xdf\x0e\xa9\xb6\x85\xb6\xd3uf<\x86\xa0Cl\xe6\n\xdf\xd69\xb3 \x99\xd3V\xae\x00'
+
+detect_ecb()
+Block size: 16
+ECB detected: True
+
+number_of_As()
+AAAAAAAAAAAABBB 15 (3xB)
+BBBBBBBBBBBBBBB 15 (15xB)
+AAAAAAAAAAAAAAABBBBBBBBBBBBBBBB 31 (16xB)
+AAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB 47 (35xB)
+
+CookieServer()
+Parsed: {'foo': 'bar', 'baz': 'qux', 'zap': 'zazzle'}
+Metachars eaten: email=foo@bar.comroleadmin&uid=10&role=user
+Encrypted & decrypted: {'email': 'foo@bar.com', 'uid': '10', 'role': 'user'}
+
+CBC bit flip
+Decrypted plaintext before bit flip: b'P' 0b1010000
+Flipping bits in previous block works:
+Decrypted plaintext after bit flip (0b1): b'Q' 0b1010001
+Decrypted plaintext after bit flip (0b10): b'R' 0b1010010
+Decrypted plaintext after bit flip (0b11): b'S' 0b1010011
+Decrypted plaintext after bit flip (0b1101101): b'=' 0b111101
+Decrypted plaintext after bit flip (0b1101011): b';' 0b111011
+
+PaddingServerCBC()
+b'ABCDEFGHIJKLMNOPyellow submarine1234\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c'
+b'\xb8\xe7\xd1\x0e\x038\x93z\xb3\x8d\xfeRE\x02\xd8\xdayellow submarin\x01'
+ciphertext[15] ^ 100 -> plaintext[31] == \x01
+100 ^ \x01 -> plaintext[31] == e (101)
+
+b'Q\nJ\xb2\xeb\x7f\x944\x80\xda\x01\x9e$\x11\xbe\xb6ABCDEFGHIJKLMNOPyellow submarine1234\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c\x0c'
+b'+\xc4\xbe&.I\x19\xdbf\xcd\xa7\xfaI\xb5%FABCDEFGHIJKLMNO\x01'
+ciphertext[15] ^ 81 -> plaintext[31] == \x01
+81 ^ \x01 -> plaintext[31] == P (80)
+
+sum_of_squared_differences()
+Letter scores:
+'ice ice baby' -> 24.5
+'!*§$%&/()=?#' -> 50.0
+Trigram scores:
+['the', 'ice'] -> 12.2
+['xxx', 'zzz'] -> 12.4
+```
+
+</details>
+
+<details>
 <summary>Solutions (spoiler alert!)</summary>
 
 ```

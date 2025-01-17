@@ -310,9 +310,11 @@ def cbc_bit_flip(enc_func):
 
 if __name__ == "__main__":
     # Oracle
+    print("black_box_ecb_cbc()")
     print("Black box:", black_box_ecb_cbc(b'X'*50))
     print()
     # ECB decryption
+    print("detect_ecb()")
     enc_func = unknown_string_encrypter()
     block_size = detect_block_size(enc_func)
     print(f"Block size: {block_size}")
@@ -320,12 +322,14 @@ if __name__ == "__main__":
     print(f"ECB detected: {ecb}")
     print()
     # Prepend A's
+    print("number_of_As()")
     for i in [3, 15, 16, 35]:
         text = i * 'B'
         output = (number_of_As(text, 16) - 1) * 'A' + text
         print(output, len(output), f"({i}xB)")
     print()
     # Structured Cookie
+    print("CookieServer()")
     print("Parsed:", parse_kv("foo=bar&baz=qux&zap=zazzle"))
     print("Metachars eaten:", profile_for("foo@bar.com&role=admin"))
     c = CookieServer()
@@ -333,6 +337,7 @@ if __name__ == "__main__":
     print("Encrypted & decrypted:", parse_kv(c.decrypt_profile(ciphertext)))
     print()
     # CBC bit flip
+    print("CBC bit flip")
     prev_block = int.from_bytes(b'C')
     aes_key = int.from_bytes(b'K')
     plaintext = int.from_bytes(b'P')
