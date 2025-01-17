@@ -4,6 +4,7 @@ import base64
 import random
 
 from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
 from Crypto.Util import Counter, Padding
 
 from set1_helpers import xor_combination
@@ -91,17 +92,11 @@ def ch20():
     print("20: Break fixed-nonce CTR statistically")
     with open('txt/20.txt') as file:
         lines = [base64.b64decode(line.strip()) for line in file.readlines()]
-    key=b'YELLOW SUBMARINE'
-    nonce = 0
-    ctr = Counter.new(
-        64,
-        prefix=nonce.to_bytes(8, 'little'),
-        initial_value=0,
-        little_endian=True
-    )
+    key = get_random_bytes(16)
+    nonce = get_random_bytes(8)
     encrypted_lines = []
     for line in lines:
-        e_cipher = AES.new(key, AES.MODE_CTR, counter=ctr)
+        e_cipher = AES.new(key, AES.MODE_CTR, nonce=nonce)  # fixed nonce
         encrypted_lines.append(e_cipher.encrypt(line))
     ## CTR encryption appears different from repeated-key XOR,
     ## but with a fixed nonce they are effectively the same thing
