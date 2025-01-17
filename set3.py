@@ -85,6 +85,7 @@ def ch19():
         first = xor_combination(line, first_guess).decode('utf-8')
         second = xor_combination(line, second_guess).decode('utf-8')
         print(f"{first.ljust(39, " ")}{second}")
+    print("...")
 
 
 def ch20():
@@ -113,6 +114,7 @@ def ch20():
         second = xor_combination(line, second_guess).decode('utf-8')
         print("Letters:", first)
         print("Refined:", second)
+    print("...")
 
 
 def ch21():
