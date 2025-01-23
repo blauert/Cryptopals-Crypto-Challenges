@@ -210,7 +210,7 @@ class MersenneTwister:
 
 
 def run_cpp_twister():
-    result = subprocess.run(["./cpp_twister"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.run(["./set3_cpp_twister"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output = result.stdout.decode("utf-8").strip().split('\n')
     return [int(num) for num in output]
 
