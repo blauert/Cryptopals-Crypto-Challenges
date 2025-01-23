@@ -194,6 +194,10 @@ Refined: Ya tremble like a alcoholic, muscles tighten up / What's that, lighten 
 Letters: Suddenly you feel like your in a horror flick / You grab your heart then wish for tomorrow quicj!
 Refined: Suddenly you feel like your in a horror flick / You grab your heart then wish for tomorrow quick!
 ...
+
+21: Implement the MT19937 Mersenne Twister RNG
+MersenneTwister(seed=1337): 1st: 1125387415 9000th: 2860976835
+C++ std::mt19937 mt(1337);: 1st: 1125387415 9000th: 2860976835
 ```
 
 </details>

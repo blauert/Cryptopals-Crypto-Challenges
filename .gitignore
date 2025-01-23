@@ -2,3 +2,4 @@ __pycache__
 .venv
 .directory
 cryptopals.com
+settings.json

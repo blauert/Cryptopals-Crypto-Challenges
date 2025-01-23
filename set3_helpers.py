@@ -1,3 +1,5 @@
+import subprocess
+
 from collections import Counter
 from itertools import zip_longest
 
@@ -150,6 +152,67 @@ def ctr_attack(encrypted_lines):
     trigram_keystream = bytearray(trigram_keystream)
 
     return first_keystream_guess, trigram_keystream
+
+
+class MersenneTwister:
+    # MT19937
+    # https://en.wikipedia.org/wiki/Mersenne_Twister#C_code
+    # & 0xffffffff -> ensure integers remain within 32 bits (wrap-around!)
+
+    def __init__(self, seed):
+        self.N = 624
+        self.M = 397
+        self.W = 32
+        self.R = 31
+        # 1 << 31
+        self.UMASK = (0xffffffff << self.R) & 0xffffffff  # 0x80000000
+        # (1 << 31) - 1
+        self.LMASK = (0xffffffff >> (self.W - self.R)) & 0xffffffff  # 0x7fffffff
+        self.A = 0x9908b0df
+        self.U = 11
+        self.S = 7
+        self.T = 15
+        self.L = 18
+        self.B = 0x9d2c5680
+        self.C = 0xefc60000
+        self.F = 1812433253
+        self.state_array = [0] * self.N
+        self.state_index = self.N
+        self.state_array[0] = seed
+        for i in range(1, self.N):
+            seed = (self.F * (seed ^ (seed >> (self.W - 2))) + i) & 0xffffffff
+            self.state_array[i] = seed
+
+    def randint(self):
+        # Refresh state array when generator is exausted (after N calls)
+        if self.state_index >= self.N:
+            self._twist()
+
+        x = self.state_array[self.state_index]
+        self.state_index += 1
+
+        # Tempering
+        y = x ^ (x >> self.U)
+        y = y ^ ((y << self.S) & self.B)
+        y = y ^ ((y << self.T) & self.C)
+        z = y ^ (y >> self.L)
+        return z
+
+    def _twist(self):
+        for i in range(self.N):
+            x = ((self.state_array[i] & self.UMASK) + (self.state_array[(i + 1) % self.N] & self.LMASK)) & 0xffffffff
+            xA = x >> 1
+            # if temp % 2 != 0
+            if (x & 0x00000001):
+                xA ^= self.A
+            self.state_array[i] = self.state_array[(i + self.M) % self.N] ^ xA
+        self.state_index = 0
+
+
+def run_cpp_twister():
+    result = subprocess.run(["./cpp_twister"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output = result.stdout.decode("utf-8").strip().split('\n')
+    return [int(num) for num in output]
 
 
 if __name__ == "__main__":

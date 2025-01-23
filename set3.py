@@ -12,6 +12,8 @@ from set3_helpers import (
     PaddingServerCBC,
     padding_oracle,
     ctr_attack,
+    MersenneTwister,
+    run_cpp_twister,
 )
 
 
@@ -120,9 +122,11 @@ def ch20():
 def ch21():
     # https://cryptopals.com/sets/3/challenges/21
     print("21: Implement the MT19937 Mersenne Twister RNG")
-    # You can get the psuedocode for this from Wikipedia.
-    # https://en.wikipedia.org/wiki/Mersenne_Twister
-
+    mt = MersenneTwister(seed=1337)
+    my_numbers = [mt.randint() for _ in range(9000)]
+    print(f"MersenneTwister(seed=1337): 1st: {my_numbers[0]} 9000th: {my_numbers[-1]}")
+    cpp_numbers = run_cpp_twister()
+    print(f"C++ std::mt19937 mt(1337);: 1st: {cpp_numbers[0]} 9000th: {cpp_numbers[-1]}")
 
 
 if __name__ == "__main__":
