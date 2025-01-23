@@ -198,6 +198,11 @@ Refined: Suddenly you feel like your in a horror flick / You grab your heart the
 21: Implement the MT19937 Mersenne Twister RNG
 MersenneTwister(seed=1337): 1st: 1125387415 9000th: 2860976835
 C++ std::mt19937 mt(1337);: 1st: 1125387415 9000th: 2860976835
+
+22: Crack an MT19937 seed
+Secret seed: 1737671313
+Starting to guess...
+Cracked the seed! It was 1737671313
 ```
 
 </details>

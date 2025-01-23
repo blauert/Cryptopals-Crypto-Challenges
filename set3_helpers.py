@@ -1,6 +1,9 @@
+import random
 import subprocess
+import time
 
 from collections import Counter
+from datetime import datetime
 from itertools import zip_longest
 
 from Crypto.Cipher import AES
@@ -213,6 +216,19 @@ def run_cpp_twister():
     result = subprocess.run(["./set3_cpp_twister"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output = result.stdout.decode("utf-8").strip().split('\n')
     return [int(num) for num in output]
+
+
+def random_time_mersenne(min_secs, max_secs):
+    time.sleep(random.randint(min_secs, max_secs))
+
+    unix_timestamp = int(datetime.now().timestamp())
+    print(f"Secret seed: {unix_timestamp}")
+    mt = MersenneTwister(seed=unix_timestamp)
+    random_number = mt.randint()
+
+    time.sleep(random.randint(min_secs, max_secs))
+    return random_number
+
 
 
 if __name__ == "__main__":

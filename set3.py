@@ -3,6 +3,8 @@
 import base64
 import random
 
+from datetime import datetime
+
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.Util import Counter, Padding
@@ -14,6 +16,7 @@ from set3_helpers import (
     ctr_attack,
     MersenneTwister,
     run_cpp_twister,
+    random_time_mersenne,
 )
 
 
@@ -129,9 +132,24 @@ def ch21():
     print(f"C++ std::mt19937 mt(1337);: 1st: {cpp_numbers[0]} 9000th: {cpp_numbers[-1]}")
 
 
+def ch22():
+    # https://cryptopals.com/sets/3/challenges/22
+    print("22: Crack an MT19937 seed")
+    random_number = random_time_mersenne(10, 100)
+    print("Starting to guess...")
+    cur_time = int(datetime.now().timestamp())
+    while True:
+        mt = MersenneTwister(seed=cur_time)
+        if mt.randint() == random_number:
+            print(f"Cracked the seed! It was {cur_time}")
+            break
+        cur_time -= 1
+
+
 if __name__ == "__main__":
     ch17(), print()
     ch18(), print()
     ch19(), print()
     ch20(), print()
     ch21(), print()
+    ch22(), print()
