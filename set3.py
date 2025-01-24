@@ -17,6 +17,7 @@ from set3_helpers import (
     MersenneTwister,
     run_cpp_twister,
     random_time_mersenne,
+    untemper,
 )
 
 
@@ -146,6 +147,24 @@ def ch22():
         cur_time -= 1
 
 
+def ch23():
+    # https://cryptopals.com/sets/3/challenges/23
+    print("23: Clone an MT19937 RNG from its output")
+    # generate random numbers
+    mt = MersenneTwister(seed=random.randint(1000,9000))
+    first_batch = [mt.randint() for _ in range(624)]
+    # recreate the state of the generator
+    reconstructed_state_array = []
+    for num in first_batch:
+        reconstructed_state_array.append(untemper(num))
+    mt_clone = MersenneTwister(seed=0)
+    # splice that state into a new instance of the MT19937 generator
+    mt_clone.state_array = reconstructed_state_array
+    # predict
+    for _ in range(3):
+        print(f"Prediction: {mt_clone.randint()} Original: {mt.randint()}")
+
+
 if __name__ == "__main__":
     ch17(), print()
     ch18(), print()
@@ -153,3 +172,4 @@ if __name__ == "__main__":
     ch20(), print()
     ch21(), print()
     ch22(), print()
+    ch23(), print()

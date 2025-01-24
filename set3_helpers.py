@@ -160,6 +160,7 @@ def ctr_attack(encrypted_lines):
 class MersenneTwister:
     # MT19937
     # https://en.wikipedia.org/wiki/Mersenne_Twister#C_code
+    # https://de.wikipedia.org/wiki/Mersenne-Twister#Code
     # & 0xffffffff -> ensure integers remain within 32 bits (wrap-around!)
 
     def __init__(self, seed):
@@ -190,11 +191,11 @@ class MersenneTwister:
         # Refresh state array when generator is exausted (after N calls)
         if self.state_index >= self.N:
             self._twist()
-
         x = self.state_array[self.state_index]
         self.state_index += 1
+        return self._temper(x)
 
-        # Tempering
+    def _temper(self, x):
         y = x ^ (x >> self.U)
         y = y ^ ((y << self.S) & self.B)
         y = y ^ ((y << self.T) & self.C)
@@ -230,6 +231,55 @@ def random_time_mersenne(min_secs, max_secs):
     return random_number
 
 
+def verbose_temper(e):
+    print(f"Input: {e}")
+    e ^= e >> 11
+    print(f"e ^= e >> 11  ->  {e}")
+    e ^= (e << 7) & 0x9d2c5680
+    print(f"e ^= (e << 7) & 0x9d2c5680  ->  {e}")
+    e ^= (e << 15) & 0xefc60000
+    print(f"e ^= (e << 15) & 0xefc60000  ->  {e}")
+    e ^= e >> 18
+    print(f"e ^= e >> 18  ->  {e}")
+    print(f"Output: {e}")
+    return e
+
+
+def untemper(e):
+    # undo e ^= e >> 18
+    # 18 most significant bits are not affected (> 1/2 of 32bit int) -> no overlap between original bits & shifted bits
+    # vvvvvvvv vvvvvv
+    # 11111111 00000000 11111111 00000000
+    # >> 18               111111 11000000
+    #                     ^^^^^^ ^^^^^^^^
+    e ^= e >> 18
+
+    # undo e ^= (e << 15) & 0xefc60000
+    for i in range(32):
+        shifted_bit_pos = i - 15
+        if shifted_bit_pos >= 0:
+            # undo XOR operations one-by-one
+            # isolate bits and shift them back to position i, then XOR with mask
+            e ^= ((e >> shifted_bit_pos) & 1) << i & 0xefc60000
+
+    # undo e ^= (e << 7) & 0x9d2c5680
+    for i in range(32):
+        shifted_bit_pos = i - 7
+        if shifted_bit_pos >= 0:
+            e ^= ((e >> shifted_bit_pos) & 1) << i & 0x9d2c5680
+
+    # undo e ^= e >> 11
+    # vvvvvvvv vvvvvvvv vvvvv
+    # 11111111 00000000 11111111 00000000
+    # >> 11       11111 11100000 00011111
+    #             ^^^^^ ^^^^^^^^ ^^^^^^^^
+    # reconstruct original up to bit 22. no more overlaps now!
+    e ^= e >> 11
+    # reconstruct the remainder
+    e ^= e >> 2*11
+
+    return e
+
 
 if __name__ == "__main__":
     # CBC padding oracle by hand
@@ -255,4 +305,10 @@ if __name__ == "__main__":
     print("Trigram scores:")
     print("['the', 'ice'] ->", round(sum_of_squared_differences(['the', 'ice'], trigrams), 1))
     print("['xxx', 'zzz'] ->", round(sum_of_squared_differences(['xxx', 'zzz'], trigrams), 1))
+    print()
+    # MT19937
+    print("verbose_temper()")
+    e = verbose_temper(0x12345678)
+    print("untemper()")
+    print(f"Untempered: {untemper(e)}")
     print()

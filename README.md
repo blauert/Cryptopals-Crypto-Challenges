@@ -62,6 +62,16 @@ Letter scores:
 Trigram scores:
 ['the', 'ice'] -> 12.2
 ['xxx', 'zzz'] -> 12.4
+
+verbose_temper()
+Input: 305419896
+e ^= e >> 11  ->  305533170
+e ^= (e << 7) & 0x9d2c5680  ->  188629234
+e ^= (e << 15) & 0xefc60000  ->  729694450
+e ^= e >> 18  ->  729696813
+Output: 729696813
+untemper()
+Untempered: 305419896
 ```
 
 </details>
@@ -203,6 +213,11 @@ C++ std::mt19937 mt(1337);: 1st: 1125387415 9000th: 2860976835
 Secret seed: 1737671313
 Starting to guess...
 Cracked the seed! It was 1737671313
+
+23: Clone an MT19937 RNG from its output
+Prediction: 1371003575 Original: 1371003575
+Prediction: 4163878595 Original: 4163878595
+Prediction: 2105425121 Original: 2105425121
 ```
 
 </details>
