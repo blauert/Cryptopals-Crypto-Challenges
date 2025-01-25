@@ -2,8 +2,7 @@
 
 import base64
 import random
-
-from datetime import datetime
+import time
 
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
@@ -18,6 +17,7 @@ from set3_helpers import (
     run_cpp_twister,
     random_time_mersenne,
     untemper,
+    MersenneCipher,
 )
 
 
@@ -138,7 +138,7 @@ def ch22():
     print("22: Crack an MT19937 seed")
     random_number = random_time_mersenne(10, 100)
     print("Starting to guess...")
-    cur_time = int(datetime.now().timestamp())
+    cur_time = int(time.time())
     while True:
         mt = MersenneTwister(seed=cur_time)
         if mt.randint() == random_number:
@@ -165,6 +165,34 @@ def ch23():
         print(f"Prediction: {mt_clone.randint()} Original: {mt.randint()}")
 
 
+def ch24():
+    # https://cryptopals.com/sets/3/challenges/24
+    print("24: Create the MT19937 stream cipher and break it")
+    # Part 1
+    # encrypt a known plaintext (say, 14 consecutive 'A' characters) prefixed by a random number of random characters
+    mc = MersenneCipher(0x00001337)
+    ciphertext = mc.encrypt(random.randbytes(random.randint(10, 100)) + b'A' * 14)
+    # From the ciphertext, recover the "key" (the 16 bit seed).
+    for seed in range(2**16):
+        cipher = MersenneCipher(seed)
+        if cipher.decrypt(ciphertext).decode('utf-8', errors='ignore').endswith('AAAA'):
+            print(f"Found secret seed: {hex(seed)}")
+            break
+    # Part 2
+    # Generate a random "password reset token" using MT19937 seeded from the current time
+    mt = MersenneTwister(int(time.time()))
+    token = mt.randint()
+    time.sleep(3)
+    # check if any given password token is actually the product of an MT19937 PRNG seeded with the current time
+    cur_time = int(time.time())
+    while True:
+        mt = MersenneTwister(cur_time)
+        if mt.randint() == token:
+            print(f"Found secret seed: {cur_time}")
+            break
+        cur_time -= 1
+
+
 if __name__ == "__main__":
     ch17(), print()
     ch18(), print()
@@ -173,3 +201,4 @@ if __name__ == "__main__":
     ch21(), print()
     ch22(), print()
     ch23(), print()
+    ch24()

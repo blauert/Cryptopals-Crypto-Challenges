@@ -3,7 +3,6 @@ import subprocess
 import time
 
 from collections import Counter
-from datetime import datetime
 from itertools import zip_longest
 
 from Crypto.Cipher import AES
@@ -222,7 +221,7 @@ def run_cpp_twister():
 def random_time_mersenne(min_secs, max_secs):
     time.sleep(random.randint(min_secs, max_secs))
 
-    unix_timestamp = int(datetime.now().timestamp())
+    unix_timestamp = int(time.time())
     print(f"Secret seed: {unix_timestamp}")
     mt = MersenneTwister(seed=unix_timestamp)
     random_number = mt.randint()
@@ -281,6 +280,26 @@ def untemper(e):
     return e
 
 
+class MersenneCipher:
+    """MT19937 stream cipher
+    generate a sequence of 8 bit outputs and call those outputs a keystream
+    """
+
+    def __init__(self, key):
+        self.key = key
+    
+    def encrypt(self, plaintext):
+        keystream = bytearray()
+        mt = MersenneTwister(seed=self.key)
+        while len(keystream) < len(plaintext):
+            keystream.extend(mt.randint().to_bytes(4))
+        # XOR each byte of plaintext with each successive byte of keystream
+        return xor_combination(plaintext, keystream)
+
+    def decrypt(self, ciphertext):
+        return self.encrypt(ciphertext)
+
+
 if __name__ == "__main__":
     # CBC padding oracle by hand
     print("PaddingServerCBC()")
@@ -312,3 +331,12 @@ if __name__ == "__main__":
     print("untemper()")
     print(f"Untempered: {untemper(e)}")
     print()
+    # MT19937 Stream Cipher
+    print("MersenneCipher()")
+    message = b'Secret message'
+    print(message)
+    mc = MersenneCipher(0x12345678)
+    ciphertext = mc.encrypt(message)
+    print(ciphertext)
+    plaintext = mc.decrypt(ciphertext)
+    print(plaintext.decode('utf-8'))

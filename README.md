@@ -72,6 +72,11 @@ e ^= e >> 18  ->  729696813
 Output: 729696813
 untemper()
 Untempered: 305419896
+
+MersenneCipher()
+b'Secret message'
+bytearray(b'\x95\xf2\xf01l\x16\xf2\x97\xc2IW\xc5\x86}')
+Secret message
 ```
 
 </details>
@@ -218,6 +223,10 @@ Cracked the seed! It was 1737671313
 Prediction: 1371003575 Original: 1371003575
 Prediction: 4163878595 Original: 4163878595
 Prediction: 2105425121 Original: 2105425121
+
+24: Create the MT19937 stream cipher and break it
+Found secret seed: 0x1337
+Found secret seed: 1737806022
 ```
 
 </details>
