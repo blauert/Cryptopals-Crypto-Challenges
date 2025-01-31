@@ -77,6 +77,12 @@ MersenneCipher()
 b'Secret message'
 bytearray(b'\x95\xf2\xf01l\x16\xf2\x97\xc2IW\xc5\x86}')
 Secret message
+
+exposed_edit()
+b'ICE ICE BABY'
+b'?\x92\x8ek\xe6\xe1\x03\xc2\xa1\xeeA\x04'
+b'?\x92\x8ek\xe6\xe1\x03\xc2\xab\xee@\x16'
+b'ICE ICE HACK'
 ```
 
 </details>
@@ -227,6 +233,9 @@ Prediction: 2105425121 Original: 2105425121
 24: Create the MT19937 stream cipher and break it
 Found secret seed: 0x1337
 Found secret seed: 1737806022
+
+25: Break "random access read/write" AES CTR
+bytearray(b"I\'m back and I\'m ringin\' the bell \nA rockin\' on the mike while the fly girls yell")
 ```
 
 </details>
