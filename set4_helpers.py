@@ -1,5 +1,6 @@
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
+from Crypto.Util import Padding
 
 
 def exposed_edit(ciphertext, key, offset, newtext):
@@ -46,6 +47,27 @@ def ctr_bit_flip(enc_func):
     # comment1=cooking %20MCs;userdata= ;admin=true;comm ...
     ciphertext[38] = ciphertext[38] ^ int.from_bytes(b'A') ^ int.from_bytes(b'=')
     return ciphertext
+
+
+class IVkeyServerCBC:
+    
+    def __init__(self):
+        self.block_size = 16
+        key = get_random_bytes(16)
+        # repurpose the key for CBC encryption as the IV
+        self.e_cipher = AES.new(key, AES.MODE_CBC, iv=key)
+        self.d_cipher = AES.new(key, AES.MODE_CBC, iv=key)
+
+    def encrypt_string(self, user_input):
+        return self.e_cipher.encrypt(Padding.pad(user_input, self.block_size))
+
+    def consume_ciphertext(self, ciphertext):
+        plaintext = Padding.unpad(self.d_cipher.decrypt(ciphertext), self.block_size)
+        allowed_chars = set(chr(i) for i in range(32,127))
+        for byte in plaintext:
+            # Noncompliant messages should raise an exception or return an error that includes the decrypted plaintext
+            if chr(byte) not in allowed_chars:
+                raise Exception(plaintext)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,12 @@
 https://cryptopals.com/
 
+|Status||
+|:---|:--:|
+|Set 1: Basics|✅|
+|Set 2: Block crypto|✅|
+|Set 3: Block & stream crypto|✅|
+|Set 4: Stream crypto and randomness|⏳|
+
 <details>
 <summary>Helper functions output</summary>
 
@@ -240,6 +247,9 @@ bytearray(b"I\'m back and I\'m ringin\' the bell \nA rockin\' on the mike while 
 26: CTR bitflipping
 comment1=cooking%20MCs;userdata=;admin=true;comment2=%20like%20a%20pound%20of%20bacon
 Is admin? -> True
+
+27: Recover the key from CBC with IV=Key
+b'Lorem ipsum dolor sit amet consectetur adipiscing elit'
 ```
 
 </details>

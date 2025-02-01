@@ -12,6 +12,7 @@ from set4_helpers import (
     exposed_edit,
     CookieServerCTR,
     ctr_bit_flip,
+    IVkeyServerCBC,
 )
 
 
@@ -42,6 +43,28 @@ def ch26():
     print(f"Is admin? -> {c.is_admin(ctr_bit_flip(c.encrypt_string))}")
 
 
+def ch27():
+    # https://cryptopals.com/sets/4/challenges/27
+    print("27: Recover the key from CBC with IV=Key")
+    c = IVkeyServerCBC()
+    # AES-CBC(P_1, P_2, P_3) -> C_1, C_2, C_3
+    ctext = c.encrypt_string(b'Lorem ipsum dolor sit amet consectetur adipiscing elit')
+    # Modify the message (you are now the attacker): C_1, C_2, C_3 -> C_1, 0, C_1
+    modified_ctext = ctext[:16] + b'\x00' * 16 + ctext  # append full ctext C to ensure correct padding
+    try:
+        c.consume_ciphertext(modified_ctext)
+    except Exception as e:
+        # this is C1 XORed against the iv (= the key)
+        block1 = e.args[0][:16]
+        # this is C1 XORed against 0
+        block3 = e.args[0][32:48]
+    # extract the key: P'_1 XOR P'_3
+    key = xor_combination(block1, block3)
+    cipher = AES.new(key, AES.MODE_CBC, iv=key)
+    print(Padding.unpad(cipher.decrypt(ctext), 16))
+
+
 if __name__ == "__main__":
     ch25(), print()
     ch26(), print()
+    ch27(), print()
