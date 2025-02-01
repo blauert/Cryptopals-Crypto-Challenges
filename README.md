@@ -236,6 +236,10 @@ Found secret seed: 1737806022
 
 25: Break "random access read/write" AES CTR
 bytearray(b"I\'m back and I\'m ringin\' the bell \nA rockin\' on the mike while the fly girls yell")
+
+26: CTR bitflipping
+comment1=cooking%20MCs;userdata=;admin=true;comment2=%20like%20a%20pound%20of%20bacon
+Is admin? -> True
 ```
 
 </details>

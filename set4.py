@@ -10,6 +10,8 @@ from set1_helpers import xor_combination
 
 from set4_helpers import (
     exposed_edit,
+    CookieServerCTR,
+    ctr_bit_flip,
 )
 
 
@@ -33,5 +35,13 @@ def ch25():
     print(plaintext[:81])
 
 
+def ch26():
+    # https://cryptopals.com/sets/4/challenges/26
+    print("26: CTR bitflipping")
+    c = CookieServerCTR()
+    print(f"Is admin? -> {c.is_admin(ctr_bit_flip(c.encrypt_string))}")
+
+
 if __name__ == "__main__":
     ch25(), print()
+    ch26(), print()
