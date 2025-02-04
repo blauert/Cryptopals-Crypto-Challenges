@@ -13,6 +13,8 @@ from set4_helpers import (
     CookieServerCTR,
     ctr_bit_flip,
     IVkeyServerCBC,
+    sha1_mac,
+    verify_mac,
 )
 
 
@@ -64,7 +66,19 @@ def ch27():
     print(Padding.unpad(cipher.decrypt(ctext), 16))
 
 
+def ch28():
+    # https://cryptopals.com/sets/4/challenges/28
+    print("28: Implement a SHA-1 keyed MAC")
+    key = get_random_bytes(16)
+    message = b'this is my message'
+    print("Message", message)
+    mac = sha1_mac(key, message)
+    print("MAC:", mac)
+    print("Untampered?", verify_mac(key, message, mac))
+
+
 if __name__ == "__main__":
     ch25(), print()
     ch26(), print()
     ch27(), print()
+    ch28(), print()

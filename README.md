@@ -90,6 +90,18 @@ b'ICE ICE BABY'
 b'?\x92\x8ek\xe6\xe1\x03\xc2\xa1\xeeA\x04'
 b'?\x92\x8ek\xe6\xe1\x03\xc2\xab\xee@\x16'
 b'ICE ICE HACK'
+
+SHA1.sha1(msg) == hashlib.sha1(msg).digest()
+True
+True
+True
+True
+True
+https://csrc.nist.gov/projects/cryptographic-standards-and-guidelines/example-values
+"abc" -> A9993E36 4706816A BA3E2571 7850C26C 9CD0D89D
+a9993e364706816aba3e25717850c26c9cd0d89d
+"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq" -> 84983E44 1C3BD26E BAAE4AA1 F95129E5 E54670F1
+84983e441c3bd26ebaae4aa1f95129e5e54670f1
 ```
 
 </details>
@@ -250,6 +262,11 @@ Is admin? -> True
 
 27: Recover the key from CBC with IV=Key
 b'Lorem ipsum dolor sit amet consectetur adipiscing elit'
+
+28: Implement a SHA-1 keyed MAC
+Message b'this is my message'
+MAC: b'\x1c\xab\xbc\x1a\xd0t\x80q\x96K\xcc\x80\xb0\xa8\x0e\xd6\xdd)\xe0\x17'
+Untampered? True
 ```
 
 </details>

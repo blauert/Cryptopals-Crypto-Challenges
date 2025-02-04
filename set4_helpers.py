@@ -2,6 +2,9 @@ from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.Util import Padding
 
+import hashlib
+import random
+
 
 def exposed_edit(ciphertext, key, offset, newtext):
     fixed_nonce = int(0).to_bytes(8)
@@ -70,6 +73,69 @@ class IVkeyServerCBC:
                 raise Exception(plaintext)
 
 
+class SHA1:
+    # https://github.com/pcaro90/Python-SHA1/blob/master/SHA1.py
+
+    def _ROTL(n, x, w=32):
+        return ((x << n) | (x >> (w - n))) & 0xFFFFFFFF
+
+    def _padding(stream):
+        """Pads the input to be a multiple of 64 bytes, including length encoding."""
+        l = len(stream) * 8
+        stream += b'\x80'  # Append 1 bit followed by 0s
+        stream += b'\x00' * ((56 - (len(stream) % 64)) % 64)
+        stream += l.to_bytes(8, 'big')  # Append original length in bits
+        return stream
+
+    def _prepare(stream):
+        """Break message into 512-bit blocks (16 words of 32 bits each)."""
+        return [list(int.from_bytes(stream[i + j:i + j + 4], 'big') for j in range(0, 64, 4)) for i in range(0, len(stream), 64)]
+
+    def sha1(data):
+        """Compute SHA-1 hash of input bytes."""
+        H = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]
+        MASK = 0xFFFFFFFF
+
+        data = SHA1._padding(data)
+        blocks = SHA1._prepare(data)
+
+        for block in blocks:
+            W = block + [0] * 64
+            for t in range(16, 80):
+                W[t] = SHA1._ROTL(1, W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16])
+
+            a, b, c, d, e = H
+
+            for t in range(80):
+                if t <= 19:
+                    K, f = 0x5A827999, (b & c) | (~b & d)
+                elif t <= 39:
+                    K, f = 0x6ED9EBA1, b ^ c ^ d
+                elif t <= 59:
+                    K, f = 0x8F1BBCDC, (b & c) | (b & d) | (c & d)
+                else:
+                    K, f = 0xCA62C1D6, b ^ c ^ d
+
+                T = (SHA1._ROTL(5, a) + f + e + K + W[t]) & MASK
+                e, d, c, b, a = d, c, SHA1._ROTL(30, b), a, T
+
+            H = [(x + y) & MASK for x, y in zip(H, [a, b, c, d, e])]
+
+        return b''.join(h.to_bytes(4, 'big') for h in H)
+
+    def hexdigest(data):
+        """Compute SHA-1 hash and return as a hex string."""
+        return SHA1.sha1(data).hex()
+
+
+def sha1_mac(key, message):
+    return SHA1.sha1(key + message)
+
+
+def verify_mac(key, message, mac):
+    return mac == SHA1.sha1(key + message)
+
+
 if __name__ == "__main__":
     # Exposed CTR Edit API
     print("exposed_edit()")
@@ -84,3 +150,15 @@ if __name__ == "__main__":
     new_ctext = exposed_edit(ctext, key, 8, b'HACK')
     print(new_ctext)
     print(d_cipher.decrypt(new_ctext))
+    print()
+    # SHA-1
+    print("SHA1.sha1(msg) == hashlib.sha1(msg).digest()")
+    for _ in range(5):
+        msg = get_random_bytes(random.randint(1, 1000))
+        print(SHA1.sha1(msg) == hashlib.sha1(msg).digest())
+    print("https://csrc.nist.gov/projects/cryptographic-standards-and-guidelines/example-values")
+    # https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/SHA1.pdf
+    print(f'"abc" -> A9993E36 4706816A BA3E2571 7850C26C 9CD0D89D')
+    print(SHA1.hexdigest(b'abc'))
+    print(f'"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq" -> 84983E44 1C3BD26E BAAE4AA1 F95129E5 E54670F1')
+    print(SHA1.hexdigest(b'abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq'))
