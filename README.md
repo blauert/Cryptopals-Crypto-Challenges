@@ -267,6 +267,14 @@ b'Lorem ipsum dolor sit amet consectetur adipiscing elit'
 Message b'this is my message'
 MAC: b'\x1c\xab\xbc\x1a\xd0t\x80q\x96K\xcc\x80\xb0\xa8\x0e\xd6\xdd)\xe0\x17'
 Untampered? True
+
+29: Break a SHA-1 keyed MAC using length extension
+Original Message: b'comment1=cooking%20MCs;userdata=foo;comment2=%20like%20a%20pound%20of%20bacon'
+Original MAC: 721014f0e50861015f85463a4c72b72e3b6b320b
+Untampered? True
+Forged Message: b'comment1=cooking%20MCs;userdata=foo;comment2=%20like%20a%20pound%20of%20bacon\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\xe8;admin=true'
+Forged MAC: 03e1ace306b9805ce7e221102e579f0f28f159d8
+Untampered? True
 ```
 
 </details>

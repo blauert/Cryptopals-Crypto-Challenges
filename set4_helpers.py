@@ -136,6 +136,107 @@ def verify_mac(key, message, mac):
     return mac == SHA1.sha1(key + message)
 
 
+def get_glue_padding(key_len, message):
+    # compute the MD padding of an arbitrary message
+    total_length = key_len + len(message)
+    return SHA1._padding(b'A' * total_length)[total_length:]
+
+
+def extract_sha1_registers(mac):
+    """Extract SHA-1 registers (a, b, c, d, e) from a given MAC."""
+    # Split MAC into 5 registers of 4 bytes each
+    return [int.from_bytes(mac[i:i+4], 'big') for i in range(0, 20, 4)]
+
+
+class LengthExtensionSHA1:
+    @staticmethod
+    def _ROTL(n, x, w=32):
+        return ((x << n) | (x >> (w - n))) & 0xFFFFFFFF
+
+    @staticmethod
+    def _padding(stream, total_length_bits):
+        """Pad the input to 64 bytes, using the specified total length (in bits)."""
+        # Start with the original message
+        padded = bytearray(stream)
+        # Append 0x80 byte (10000000 in binary)
+        padded.append(0x80)
+        # Append 0 ≤ k < 512 bits (0 ≤ k < 64 bytes) so that total length is 56 mod 64
+        while (len(padded) % 64) != 56:
+            padded.append(0x00)
+        # Append original length in bits as 64-bit big-endian integer
+        padded += total_length_bits.to_bytes(8, 'big')
+        return bytes(padded)
+
+    @staticmethod
+    def _prepare(stream):
+        """Break padded message into 512-bit blocks (16 words of 32 bits each)."""
+        return [
+            [
+                int.from_bytes(stream[i + j : i + j + 4], 'big')
+                for j in range(0, 64, 4)
+            ]
+            for i in range(0, len(stream), 64)
+        ]
+
+    @staticmethod
+    def sha1(data, a, b, c, d, e, total_length_bytes):
+        """
+        Compute SHA-1 hash with custom initial state and total length.
+        
+        Parameters:
+        - data: Bytes to process (glue_padding + new_message)
+        - a, b, c, d, e: Initial SHA-1 state (from original MAC)
+        - total_length_bytes: Total length of the entire forged message (key + original_message + glue_padding + new_message)
+        """
+        H = [a, b, c, d, e]
+        MASK = 0xFFFFFFFF
+
+        # Calculate total length in bits for padding
+        total_length_bits = total_length_bytes * 8
+
+        # Apply padding to the data using the total forged length
+        padded_data = LengthExtensionSHA1._padding(data, total_length_bits)
+        blocks = LengthExtensionSHA1._prepare(padded_data)
+
+        for block in blocks:
+            W = block + [0] * 64
+            # Expand the message schedule
+            for t in range(16, 80):
+                W[t] = LengthExtensionSHA1._ROTL(1, W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16])
+
+            # Initialize working variables
+            a_, b_, c_, d_, e_ = H
+
+            # Main loop
+            for t in range(80):
+                if t <= 19:
+                    K = 0x5A827999
+                    f = (b_ & c_) | (~b_ & d_)
+                elif t <= 39:
+                    K = 0x6ED9EBA1
+                    f = b_ ^ c_ ^ d_
+                elif t <= 59:
+                    K = 0x8F1BBCDC
+                    f = (b_ & c_) | (b_ & d_) | (c_ & d_)
+                else:
+                    K = 0xCA62C1D6
+                    f = b_ ^ c_ ^ d_
+
+                T = (LengthExtensionSHA1._ROTL(5, a_) + f + e_ + K + W[t]) & MASK
+                e_, d_, c_, b_, a_ = d_, c_, LengthExtensionSHA1._ROTL(30, b_), a_, T
+
+            # Update state
+            H = [
+                (H[0] + a_) & MASK,
+                (H[1] + b_) & MASK,
+                (H[2] + c_) & MASK,
+                (H[3] + d_) & MASK,
+                (H[4] + e_) & MASK,
+            ]
+
+        return b''.join(h.to_bytes(4, 'big') for h in H)
+
+
 if __name__ == "__main__":
     # Exposed CTR Edit API
     print("exposed_edit()")
