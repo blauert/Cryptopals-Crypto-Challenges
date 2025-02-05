@@ -89,20 +89,26 @@ def ch29():
     print(f"Original MAC: {original_mac.hex()}")
     print("Untampered?", verify_mac(key, original_message, original_mac))
     # Guess key length
-    key_len = 16
-    # Extract SHA-1 internal state
-    a, b, c, d, e = extract_sha1_registers(original_mac)
-    # Compute glue padding (recreating the padding SHA-1 used)
-    glue_padding = get_glue_padding(key_len, original_message)
-    # Forge new message
-    new_message = b";admin=true"
-    forged_message = original_message + glue_padding + new_message
-    # Compute forged MAC using extracted state
-    forged_length = key_len + len(forged_message)
-    forged_mac = LengthExtensionSHA1.sha1(new_message, a, b, c, d, e, forged_length)
-    print(f"Forged Message: {forged_message}")
-    print(f"Forged MAC: {forged_mac.hex()}")
-    print("Untampered?", verify_mac(key, forged_message, forged_mac))
+    key_len = 1
+    while True:
+        print(f"Trying Key Length: {key_len}")
+        # Extract SHA-1 internal state
+        a, b, c, d, e = extract_sha1_registers(original_mac)
+        # Compute glue padding (recreating the padding SHA-1 used)
+        glue_padding = get_glue_padding(key_len, original_message)
+        # Forge new message
+        new_message = b";admin=true"
+        forged_message = original_message + glue_padding + new_message
+        # Compute forged MAC using extracted state
+        forged_length = key_len + len(forged_message)
+        forged_mac = LengthExtensionSHA1.sha1(new_message, a, b, c, d, e, forged_length)
+        untampered = verify_mac(key, forged_message, forged_mac)
+        print("Untampered?", untampered)
+        if untampered:
+            print(f"Forged Message: {forged_message}")
+            print(f"Forged MAC: {forged_mac.hex()}")
+            break
+        key_len += 1
 
 
 if __name__ == "__main__":
