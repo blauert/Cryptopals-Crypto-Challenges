@@ -1,9 +1,11 @@
 from Crypto.Cipher import AES
+from Crypto.Hash import MD4
 from Crypto.Random import get_random_bytes
 from Crypto.Util import Padding
 
 import hashlib
 import random
+import struct
 
 
 def exposed_edit(ciphertext, key, offset, newtext):
@@ -149,6 +151,9 @@ def extract_sha1_registers(mac):
 
 
 class LengthExtensionSHA1:
+    # https://www.youtube.com/watch?v=H_bvdhPMizE
+    # https://danq.me/2023/11/30/length-extension-attack/
+
     @staticmethod
     def _ROTL(n, x, w=32):
         return ((x << n) | (x >> (w - n))) & 0xFFFFFFFF
@@ -235,6 +240,165 @@ class LengthExtensionSHA1:
             ]
 
         return b''.join(h.to_bytes(4, 'big') for h in H)
+
+
+class LengthExtensionMD4:
+    """MD4 length extension attack implementation."""
+
+    @staticmethod
+    def _left_rotate(x, n):
+        return ((x << n) | (x >> (32 - n))) & 0xFFFFFFFF
+
+    @staticmethod
+    def _padding(stream, total_length_bits):
+        """
+        Pads the given 'stream' (bytes) as MD4 would, assuming the full message length in bits is total_length_bits.
+        (total_length_bits is computed on the entire message—that is key || original_message || glue_padding || new_message)
+        """
+        padded = bytearray(stream)
+        padded.append(0x80)
+        while (len(padded) % 64) != 56:
+            padded.append(0x00)
+        padded += struct.pack("<Q", total_length_bits)
+        return bytes(padded)
+
+    @staticmethod
+    def _process_block(block, a, b, c, d):
+        """Process a single 64-byte block with MD4 and update state (a, b, c, d)."""
+        # Unpack block into 16 little-endian 32-bit integers
+        X = list(struct.unpack("<16I", block))
+
+        # Define MD4 auxiliary functions (with masking to 32 bits)
+        def F(x, y, z): 
+            return ((x & y) | ((~x) & z)) & 0xFFFFFFFF
+        def G(x, y, z): 
+            return ((x & y) | (x & z) | (y & z)) & 0xFFFFFFFF
+        def H(x, y, z): 
+            return (x ^ y ^ z) & 0xFFFFFFFF
+
+        # Each round uses modular additions; force mod 2^32 at each step.
+        def round1(a, b, c, d, k, s):
+            return LengthExtensionMD4._left_rotate((a + F(b, c, d) + X[k]) & 0xFFFFFFFF, s)
+        def round2(a, b, c, d, k, s):
+            return LengthExtensionMD4._left_rotate((a + G(b, c, d) + X[k] + 0x5A827999) & 0xFFFFFFFF, s)
+        def round3(a, b, c, d, k, s):
+            return LengthExtensionMD4._left_rotate((a + H(b, c, d) + X[k] + 0x6ED9EBA1) & 0xFFFFFFFF, s)
+
+        # Save the initial state.
+        aa, bb, cc, dd = a, b, c, d
+
+        # Round 1 (process 16 operations in groups of 4)
+        a = round1(a, b, c, d, 0, 3)
+        d = round1(d, a, b, c, 1, 7)
+        c = round1(c, d, a, b, 2, 11)
+        b = round1(b, c, d, a, 3, 19)
+
+        a = round1(a, b, c, d, 4, 3)
+        d = round1(d, a, b, c, 5, 7)
+        c = round1(c, d, a, b, 6, 11)
+        b = round1(b, c, d, a, 7, 19)
+
+        a = round1(a, b, c, d, 8, 3)
+        d = round1(d, a, b, c, 9, 7)
+        c = round1(c, d, a, b, 10, 11)
+        b = round1(b, c, d, a, 11, 19)
+
+        a = round1(a, b, c, d, 12, 3)
+        d = round1(d, a, b, c, 13, 7)
+        c = round1(c, d, a, b, 14, 11)
+        b = round1(b, c, d, a, 15, 19)
+
+        # Round 2
+        a = round2(a, b, c, d, 0, 3)
+        d = round2(d, a, b, c, 4, 5)
+        c = round2(c, d, a, b, 8, 9)
+        b = round2(b, c, d, a, 12, 13)
+
+        a = round2(a, b, c, d, 1, 3)
+        d = round2(d, a, b, c, 5, 5)
+        c = round2(c, d, a, b, 9, 9)
+        b = round2(b, c, d, a, 13, 13)
+
+        a = round2(a, b, c, d, 2, 3)
+        d = round2(d, a, b, c, 6, 5)
+        c = round2(c, d, a, b, 10, 9)
+        b = round2(b, c, d, a, 14, 13)
+
+        a = round2(a, b, c, d, 3, 3)
+        d = round2(d, a, b, c, 7, 5)
+        c = round2(c, d, a, b, 11, 9)
+        b = round2(b, c, d, a, 15, 13)
+
+        # Round 3
+        a = round3(a, b, c, d, 0, 3)
+        d = round3(d, a, b, c, 8, 9)
+        c = round3(c, d, a, b, 4, 11)
+        b = round3(b, c, d, a, 12, 15)
+
+        a = round3(a, b, c, d, 2, 3)
+        d = round3(d, a, b, c, 10, 9)
+        c = round3(c, d, a, b, 6, 11)
+        b = round3(b, c, d, a, 14, 15)
+
+        a = round3(a, b, c, d, 1, 3)
+        d = round3(d, a, b, c, 9, 9)
+        c = round3(c, d, a, b, 5, 11)
+        b = round3(b, c, d, a, 13, 15)
+
+        a = round3(a, b, c, d, 3, 3)
+        d = round3(d, a, b, c, 11, 9)
+        c = round3(c, d, a, b, 7, 11)
+        b = round3(b, c, d, a, 15, 15)
+
+        a = (a + aa) & 0xFFFFFFFF
+        b = (b + bb) & 0xFFFFFFFF
+        c = (c + cc) & 0xFFFFFFFF
+        d = (d + dd) & 0xFFFFFFFF
+
+        return a, b, c, d
+
+    @staticmethod
+    def md4(data, a, b, c, d, total_length_bytes):
+        """
+        Compute MD4 hash on 'data' (the extension, e.g. new_message) starting from state (a, b, c, d)
+        and assuming that the overall (forged) message length in bytes is total_length_bytes.
+        """
+        total_length_bits = total_length_bytes * 8
+        padded_data = LengthExtensionMD4._padding(data, total_length_bits)
+        for i in range(0, len(padded_data), 64):
+            a, b, c, d = LengthExtensionMD4._process_block(padded_data[i:i+64], a, b, c, d)
+        return struct.pack("<4I", a, b, c, d)
+
+
+def md4_mac(key, message):
+    """Computes MD4-based MAC as MD4(key || message)"""
+    return MD4.new(key + message).digest()
+
+
+def verify_md4_mac(key, message, mac):
+    """Returns True if the MAC is valid for key || message"""
+    return md4_mac(key, message) == mac
+
+
+def extract_md4_registers(md4_hash):
+    """Extract the 4 (32-bit) registers (A, B, C, D) from an MD4 digest"""
+    return struct.unpack("<4I", md4_hash)
+
+
+def get_md4_glue_padding(key_length, message):
+    """
+    Computes MD4 glue padding for a message that was hashed as:
+         MD4(key || message)
+    Returns the padding that MD4 would have appended to (key || message).
+    """
+    total_length = key_length + len(message)
+    total_length_bits = total_length * 8
+    # MD4 padding: 0x80 then zeros until message length mod 64 == 56,
+    # then the 64-bit little-endian representation of (total_length_bits)
+    padding = b"\x80"
+    padding += b"\x00" * ((56 - (total_length + 1) % 64) % 64)
+    padding += struct.pack("<Q", total_length_bits)
+    return padding
 
 
 if __name__ == "__main__":

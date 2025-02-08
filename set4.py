@@ -18,6 +18,11 @@ from set4_helpers import (
     get_glue_padding,
     extract_sha1_registers,
     LengthExtensionSHA1,
+    LengthExtensionMD4,
+    md4_mac,
+    verify_md4_mac,
+    extract_md4_registers,
+    get_md4_glue_padding,
 )
 
 
@@ -102,7 +107,43 @@ def ch29():
         # Compute forged MAC using extracted state
         forged_length = key_len + len(forged_message)
         forged_mac = LengthExtensionSHA1.sha1(new_message, a, b, c, d, e, forged_length)
+        # Verify if the forged MAC is valid
         untampered = verify_mac(key, forged_message, forged_mac)
+        print("Untampered?", untampered)
+        if untampered:
+            print(f"Forged Message: {forged_message}")
+            print(f"Forged MAC: {forged_mac.hex()}")
+            break
+        key_len += 1
+
+
+def ch30():
+    # https://cryptopals.com/sets/4/challenges/30
+    print("30: Break an MD4 keyed MAC using length extension")
+    key = get_random_bytes(16)
+    original_message = b"comment1=cooking%20MCs;userdata=foo;comment2=%20like%20a%20pound%20of%20bacon"
+    original_mac = md4_mac(key, original_message)
+    print(f"Original Message: {original_message}")
+    print(f"Original MAC: {original_mac.hex()}")
+    print("Untampered?", verify_md4_mac(key, original_message, original_mac))
+    # Try different key lengths (brute force)
+    key_len = 1
+    while True:
+        print(f"Trying Key Length: {key_len}")
+        # Extract MD4 internal state from original MAC
+        a, b, c, d = extract_md4_registers(original_mac)
+        # Compute the glue padding MD4 would have appended to (key || original_message)
+        glue_padding = get_md4_glue_padding(key_len, original_message)
+        # Forge new message: original_message || glue_padding || new_message
+        new_message = b";admin=true"
+        forged_message = original_message + glue_padding + new_message
+        # Compute the total forged length (in bytes): key length + original_message + glue_padding + new_message
+        forged_total_length = key_len + len(original_message) + len(glue_padding) + len(new_message)
+        # Compute the forged MAC by processing ONLY new_message
+        # using the extracted state and the assumed total length.
+        forged_mac = LengthExtensionMD4.md4(new_message, a, b, c, d, forged_total_length)
+        # Verify whether the forged MAC is accepted (i.e. matches MD4(key || forged_message))
+        untampered = verify_md4_mac(key, forged_message, forged_mac)
         print("Untampered?", untampered)
         if untampered:
             print(f"Forged Message: {forged_message}")
@@ -117,3 +158,4 @@ if __name__ == "__main__":
     ch27(), print()
     ch28(), print()
     ch29(), print()
+    ch30(), print()
