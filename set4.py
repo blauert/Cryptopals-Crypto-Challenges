@@ -23,6 +23,8 @@ from set4_helpers import (
     verify_md4_mac,
     extract_md4_registers,
     get_md4_glue_padding,
+    HMACServer,
+    TimingAttackClient,
 )
 
 
@@ -152,6 +154,18 @@ def ch30():
         key_len += 1
 
 
+def ch31():
+    # https://cryptopals.com/sets/4/challenges/31
+    print("31: Implement and break HMAC-SHA1 with an artificial timing leak")
+    server = HMACServer(insecure_delay=0.05)  # 50ms
+    server.start()  # Start the server in the background
+    client = TimingAttackClient()
+    recovered_hmac = client.recover_hmac()
+    print("Recovered HMAC:", recovered_hmac)
+    server.shutdown()  # Shut down the server when done
+
+
+
 if __name__ == "__main__":
     ch25(), print()
     ch26(), print()
@@ -159,3 +173,4 @@ if __name__ == "__main__":
     ch28(), print()
     ch29(), print()
     ch30(), print()
+    ch31(), print()

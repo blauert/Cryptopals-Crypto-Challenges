@@ -3,9 +3,18 @@ from Crypto.Hash import MD4
 from Crypto.Random import get_random_bytes
 from Crypto.Util import Padding
 
+import hmac
 import hashlib
+import logging
+import os
 import random
+import requests
 import struct
+import time
+import threading
+
+from flask import Flask, request, abort
+from werkzeug.serving import make_server
 
 
 def exposed_edit(ciphertext, key, offset, newtext):
@@ -399,6 +408,118 @@ def get_md4_glue_padding(key_length, message):
     padding += b"\x00" * ((56 - (total_length + 1) % 64) % 64)
     padding += struct.pack("<Q", total_length_bits)
     return padding
+
+
+class HMACServer:
+    def __init__(self, host='127.0.0.1', port=9000, insecure_delay=0.05):
+        """
+        insecure_delay: time in seconds to sleep after comparing each matching byte.
+        (Default is 0.05 seconds = 50ms.)
+        """
+        self.host = host
+        self.port = port
+        self.insecure_delay = insecure_delay
+        # Generate a random secret key for HMAC (fixed while the server is running)
+        self.secret_key = os.urandom(16)
+        # Create the Flask app
+        self.app = Flask(__name__)
+        self.setup_routes()
+        self.server = None
+        self.thread = None
+
+        # Silence the werkzeug logger
+        logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
+    def setup_routes(self):
+        @self.app.route("/test")
+        def test():
+            # Get query parameters: file and signature
+            file_param = request.args.get("file", "")
+            signature_param = request.args.get("signature", "")
+            # Compute the valid HMAC-SHA1 for the file parameter.
+            valid_hmac = self.compute_hmac_sha1(self.secret_key, file_param.encode())
+            # Convert the valid HMAC to a hex string (as bytes) for comparison.
+            valid_hmac_hex = valid_hmac.hex().encode()
+            if self.insecure_compare(signature_param.encode(), valid_hmac_hex):
+                return "OK", 200
+            else:
+                abort(500)
+
+    def insecure_compare(self, a: bytes, b: bytes) -> bool:
+        """
+        Compare two byte strings byte-by-byte.
+        Sleep for self.insecure_delay seconds after each matching byte.
+        Return False immediately if a byte differs.
+        """
+        if len(a) != len(b):
+            return False
+        for x, y in zip(a, b):
+            if x != y:
+                return False
+            time.sleep(self.insecure_delay)
+        return True
+
+    def compute_hmac_sha1(self, key: bytes, message: bytes) -> bytes:
+        """Compute the HMAC-SHA1 for the given message using the key."""
+        return hmac.new(key, message, hashlib.sha1).digest()
+
+    def start(self):
+        """Start the Flask server in a background thread."""
+        self.server = make_server(self.host, self.port, self.app)
+        self.thread = threading.Thread(target=self.server.serve_forever)
+        self.thread.start()
+        # Give the server a moment to start
+        time.sleep(1)
+        print(f"Server started at http://{self.host}:{self.port}")
+
+    def shutdown(self):
+        """Shut down the Flask server."""
+        if self.server:
+            self.server.shutdown()
+            self.thread.join()
+            print("Server shutdown.")
+
+
+class TimingAttackClient:
+    def __init__(self, target_url="http://127.0.0.1:9000/test", file_param="foo"):
+        self.target_url = target_url
+        self.file_param = file_param
+
+    def query(self, signature: str) -> float:
+        """
+        Query the target URL with the provided signature.
+        Returns the elapsed time (in seconds) of the request.
+        """
+        params = {"file": self.file_param, "signature": signature}
+        start = time.perf_counter()
+        try:
+            _ = requests.get(self.target_url, params=params)
+        except Exception:
+            return 0.0
+        end = time.perf_counter()
+        return end - start
+
+    def recover_hmac(self) -> str:
+        """
+        Exploit the timing leak to recover the valid HMAC one hex digit at a time.
+        Returns the recovered HMAC (hex-encoded).
+        """
+        known = ""
+        hex_chars = "0123456789abcdef"
+        target_length = 40  # HMAC-SHA1 produces 20 bytes = 40 hex characters.
+        print("Starting timing attack...")
+        while len(known) < target_length:
+            timings = {}
+            for c in hex_chars:
+                # Construct a trial signature: known part + candidate + pad with zeros.
+                trial = known + c + "0" * (target_length - len(known) - 1)
+                t = self.query(trial)
+                timings[c] = t
+                print(f"Trying {trial} -> {t:.3f} sec")
+            best_char = max(timings, key=timings.get)
+            known += best_char
+            print(f"Guessed so far: {known}")
+        return known
 
 
 if __name__ == "__main__":
