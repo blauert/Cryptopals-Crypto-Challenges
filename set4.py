@@ -25,6 +25,7 @@ from set4_helpers import (
     get_md4_glue_padding,
     HMACServer,
     TimingAttackClient,
+    BetterTimingAttackClient,
 )
 
 
@@ -165,6 +166,24 @@ def ch31():
     server.shutdown()  # Shut down the server when done
 
 
+def ch32():
+    # https://cryptopals.com/sets/4/challenges/32
+    print("32: Break HMAC-SHA1 with a slightly less artificial timing leak")
+    server = HMACServer(insecure_delay=0.005)  # 5ms
+    server.start()
+    client = TimingAttackClient()
+    recovered_hmac = client.recover_hmac()
+    print("Recovered HMAC:", recovered_hmac)
+    server.shutdown()
+    # At some point, the difference will be too small to reliably measure due to network jitter and OS scheduling noise.
+    # Improve the attack with multiple timing samples and averaging.
+    print("Try again...")
+    server.start()
+    client = BetterTimingAttackClient(samples_per_byte=10)
+    recovered_mac = client.find_valid_mac()
+    print(f"Recovered HMAC: {recovered_mac}")
+    server.shutdown()
+
 
 if __name__ == "__main__":
     ch25(), print()
@@ -174,3 +193,4 @@ if __name__ == "__main__":
     ch29(), print()
     ch30(), print()
     ch31(), print()
+    ch32()

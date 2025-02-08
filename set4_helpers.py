@@ -440,6 +440,7 @@ class HMACServer:
             valid_hmac = self.compute_hmac_sha1(self.secret_key, file_param.encode())
             # Convert the valid HMAC to a hex string (as bytes) for comparison.
             valid_hmac_hex = valid_hmac.hex().encode()
+            self.solution = valid_hmac_hex
             if self.insecure_compare(signature_param.encode(), valid_hmac_hex):
                 return "OK", 200
             else:
@@ -477,6 +478,7 @@ class HMACServer:
         if self.server:
             self.server.shutdown()
             self.thread.join()
+            print(f"The correct HMAC was {self.solution}")
             print("Server shutdown.")
 
 
@@ -520,6 +522,57 @@ class TimingAttackClient:
             known += best_char
             print(f"Guessed so far: {known}")
         return known
+
+
+class BetterTimingAttackClient:
+    """Performs a timing attack using multiple timing samples and averaging."""
+
+    def __init__(self, target_url="http://127.0.0.1:9000/test", file_param="foo", hmac_length=20, samples_per_byte=5):
+        self.target_url = target_url
+        self.file_param = file_param
+        self.hmac_length = hmac_length  # HMAC-SHA1 is 20 bytes long
+        self.samples_per_byte = samples_per_byte  # Number of timing samples per byte
+
+    def measure_response_time(self, signature):
+        """Sends a request with a given signature and returns the response time."""
+        url = f"{self.target_url}?file={self.file_param}&signature={signature}"
+        start_time = time.perf_counter()
+        response = requests.get(url)
+        end_time = time.perf_counter()
+        return (end_time - start_time), response.status_code
+
+    def find_valid_mac(self):
+        """Performs the timing attack to discover the valid MAC."""
+        discovered_mac = bytearray(self.hmac_length)
+
+        print(f"Starting timing attack with {self.samples_per_byte} samples per byte...")
+
+        for i in range(self.hmac_length):
+            best_byte = None
+            best_avg_time = 0
+
+            for candidate in range(256):  # Test all possible byte values (0x00 to 0xFF)
+                test_mac = discovered_mac[:i] + bytes([candidate]) + b"0" * (self.hmac_length - i - 1)
+                test_mac_hex = test_mac.hex()
+
+                sample_times = []
+                for _ in range(self.samples_per_byte):
+                    response_time, status_code = self.measure_response_time(test_mac_hex)
+                    sample_times.append(response_time)
+
+                avg_time = sum(sample_times) / len(sample_times)
+
+                print(f"Testing byte {i}: {candidate:02x}, Avg Time: {avg_time:.6f}")
+
+                if avg_time > best_avg_time:
+                    best_avg_time = avg_time
+                    best_byte = candidate
+
+            discovered_mac[i] = best_byte
+            print(f"Byte {i} found: {best_byte:02x} (Avg Time: {best_avg_time:.6f})")
+
+        print(f"Final discovered MAC: {discovered_mac.hex()}")
+        return discovered_mac.hex()
 
 
 if __name__ == "__main__":

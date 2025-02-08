@@ -5,7 +5,7 @@ https://cryptopals.com/
 |Set 1: Basics|✅|
 |Set 2: Block crypto|✅|
 |Set 3: Block & stream crypto|✅|
-|Set 4: Stream crypto and randomness|⏳|
+|Set 4: Stream crypto and randomness|✅|
 
 <details>
 <summary>Helper functions output</summary>
@@ -385,6 +385,70 @@ Trying 9ddcf6d440d111085bb258d094fae8d52b0b8ebe -> 1.966 sec
 Trying 9ddcf6d440d111085bb258d094fae8d52b0b8ebf -> 1.962 sec
 Guessed so far: 9ddcf6d440d111085bb258d094fae8d52b0b8eb1
 Recovered HMAC: 9ddcf6d440d111085bb258d094fae8d52b0b8eb1
+The correct HMAC was b'9ddcf6d440d111085bb258d094fae8d52b0b8eb1'
+Server shutdown.
+
+32: Break HMAC-SHA1 with a slightly less artificial timing leak
+Server started at http://127.0.0.1:9000
+Starting timing attack...
+...
+Recovered HMAC: 0775a8d992cac342ec38d56427efd694065f6b9e
+The correct HMAC was b'a34d15e6f0fa6d662875318507b067c1d3576cdd'
+Server shutdown.
+Try again...
+Server started at http://127.0.0.1:9000
+Starting timing attack with 10 samples per byte...
+Testing byte 0: 00, Avg Time: 0.005210
+Testing byte 0: 01, Avg Time: 0.005168
+Testing byte 0: 02, Avg Time: 0.002823
+Testing byte 0: 03, Avg Time: 0.002674
+Testing byte 0: 04, Avg Time: 0.002671
+Testing byte 0: 05, Avg Time: 0.002785
+Testing byte 0: 06, Avg Time: 0.002652
+Testing byte 0: 07, Avg Time: 0.002739
+Testing byte 0: 08, Avg Time: 0.002369
+Testing byte 0: 09, Avg Time: 0.002615
+Testing byte 0: 0a, Avg Time: 0.002586
+Testing byte 0: 0b, Avg Time: 0.002321
+Testing byte 0: 0c, Avg Time: 0.002201
+Testing byte 0: 0d, Avg Time: 0.002230
+Testing byte 0: 0e, Avg Time: 0.002366
+Testing byte 0: 0f, Avg Time: 0.002228
+Testing byte 0: 10, Avg Time: 0.002263
+Testing byte 0: 11, Avg Time: 0.002294
+Testing byte 0: 12, Avg Time: 0.002412
+Testing byte 0: 13, Avg Time: 0.002363
+Testing byte 0: 14, Avg Time: 0.002493
+Testing byte 0: 15, Avg Time: 0.002180
+Testing byte 0: 16, Avg Time: 0.002515
+Testing byte 0: 17, Avg Time: 0.002227
+Testing byte 0: 18, Avg Time: 0.002324
+Testing byte 0: 19, Avg Time: 0.002434
+Testing byte 0: 1a, Avg Time: 0.002348
+Testing byte 0: 1b, Avg Time: 0.002718
+Testing byte 0: 1c, Avg Time: 0.002720
+Testing byte 0: 1d, Avg Time: 0.002170
+...
+Testing byte 19: f0, Avg Time: 0.205513
+Testing byte 19: f1, Avg Time: 0.206276
+Testing byte 19: f2, Avg Time: 0.205692
+Testing byte 19: f3, Avg Time: 0.205832
+Testing byte 19: f4, Avg Time: 0.205678
+Testing byte 19: f5, Avg Time: 0.205073
+Testing byte 19: f6, Avg Time: 0.205698
+Testing byte 19: f7, Avg Time: 0.204906
+Testing byte 19: f8, Avg Time: 0.204936
+Testing byte 19: f9, Avg Time: 0.205785
+Testing byte 19: fa, Avg Time: 0.205277
+Testing byte 19: fb, Avg Time: 0.205657
+Testing byte 19: fc, Avg Time: 0.205196
+Testing byte 19: fd, Avg Time: 0.205619
+Testing byte 19: fe, Avg Time: 0.205633
+Testing byte 19: ff, Avg Time: 0.205400
+Byte 19 found: 8e (Avg Time: 0.217568)
+Final discovered MAC: 8dd69b6ef92695e9dc39a9f81adc2efa4c13b18e
+Recovered HMAC: 8dd69b6ef92695e9dc39a9f81adc2efa4c13b18e
+The correct HMAC was b'8dd69b6ef92695e9dc39a9f81adc2efa4c13b18e'
 Server shutdown.
 ```
 
